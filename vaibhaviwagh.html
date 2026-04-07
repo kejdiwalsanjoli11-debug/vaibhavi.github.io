@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Customer Segmentation Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { font-family: Arial; margin: 0; background: #f4f6f9; }
+    header { background: #2c3e50; color: white; padding: 15px; text-align: center; }
+    .container { padding: 20px; }
+    .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
+    button { padding: 10px 15px; border: none; background: #3498db; color: white; border-radius: 5px; cursor: pointer; }
+    canvas { max-width: 100%; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Customer Segmentation using K-Means</h1>
+  <p>Group customers based on purchase behavior for targeted marketing</p>
+</header>
+
+<div class="container">
+  <div class="card">
+    <h2>Generate Customer Data</h2>
+    <button onclick="generateData()">Generate Data</button>
+  </div>
+
+  <div class="card">
+    <h2>Run K-Means Clustering</h2>
+    <button onclick="runKMeans()">Segment Customers</button>
+  </div>
+
+  <div class="card">
+    <h2>Visualization</h2>
+    <canvas id="chart"></canvas>
+  </div>
+</div>
+
+<script>
+let customers = [];
+let clusters = [];
+
+function generateData() {
+  customers = [];
+  for (let i = 0; i < 50; i++) {
+    customers.push({
+      spending: Math.random() * 100,
+      frequency: Math.random() * 50
+    });
+  }
+  alert("Customer data generated!");
+}
+
+function distance(a, b) {
+  return Math.sqrt(
+    Math.pow(a.spending - b.spending, 2) +
+    Math.pow(a.frequency - b.frequency, 2)
+  );
+}
+
+function runKMeans(k = 3) {
+  if (customers.length === 0) {
+    alert("Generate data first!");
+    return;
+  }
+
+  let centroids = customers.slice(0, k);
+
+  for (let iter = 0; iter < 10; iter++) {
+    clusters = Array.from({ length: k }, () => []);
+
+    customers.forEach(c => {
+      let distances = centroids.map(cent => distance(c, cent));
+      let minIndex = distances.indexOf(Math.min(...distances));
+      clusters[minIndex].push(c);
+    });
+
+    centroids = clusters.map(cluster => {
+      let avgSpend = cluster.reduce((sum, c) => sum + c.spending, 0) / cluster.length;
+      let avgFreq = cluster.reduce((sum, c) => sum + c.frequency, 0) / cluster.length;
+      return { spending: avgSpend, frequency: avgFreq };
+    });
+  }
+
+  plotClusters();
+}
+
+function plotClusters() {
+  const colors = ['red', 'blue', 'green'];
+  const datasets = clusters.map((cluster, i) => ({
+    label: 'Cluster ' + (i + 1),
+    data: cluster.map(c => ({ x: c.spending, y: c.frequency })),
+    backgroundColor: colors[i]
+  }));
+
+  new Chart(document.getElementById('chart'), {
+    type: 'scatter',
+    data: { datasets: datasets },
+    options: {
+      scales: {
+        x: { title: { display: true, text: 'Spending' } },
+        y: { title: { display: true, text: 'Purchase Frequency' } }
+      }
+    }
+  });
+}
+</script>
+
+</body>
+</html>
